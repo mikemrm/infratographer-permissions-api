@@ -13,6 +13,7 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/metal-toolbox/iam-runtime-contrib/middleware/echo/iamruntimemiddleware"
 	"github.com/pkg/errors"
 	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/events"
@@ -66,7 +67,11 @@ func (p *Permissions) Middleware() echo.MiddlewareFunc {
 				return next(c)
 			}
 
-			actor := echojwtx.Actor(c)
+			actor := iamruntimemiddleware.ContextSubject(c)
+			if actor == "" {
+				actor = echojwtx.Actor(c)
+			}
+
 			if actor == "" {
 				return ErrNoAuthToken
 			}

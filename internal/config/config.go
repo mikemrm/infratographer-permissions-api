@@ -5,7 +5,6 @@ import (
 	"github.com/spf13/pflag"
 	"github.com/spf13/viper"
 	"go.infratographer.com/x/crdbx"
-	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/echox"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/loggingx"
@@ -15,6 +14,8 @@ import (
 	"go.infratographer.com/permissions-api/internal/spicedbx"
 )
 
+var defaultRuntimeSocketPath = "/tmp/runtime.sock"
+
 // EventsConfig stores the configuration for a load-balancer-api events config
 type EventsConfig struct {
 	events.Config  `mapstructure:",squash"`
@@ -22,11 +23,16 @@ type EventsConfig struct {
 	ZedTokenBucket string
 }
 
+// RuntimeConfig stores the configuration for the iam-runtime
+type RuntimeConfig struct {
+	Socket string
+}
+
 // AppConfig is the struct used for configuring the app
 type AppConfig struct {
 	CRDB    crdbx.Config
-	OIDC    echojwtx.AuthConfig
 	Logging loggingx.Config
+	Runtime RuntimeConfig
 	Server  echox.Config
 	SpiceDB spicedbx.Config
 	Tracing otelx.Config
@@ -40,4 +46,7 @@ func MustViperFlags(v *viper.Viper, flags *pflag.FlagSet) {
 
 	flags.String("events-zedtokenbucket", "", "NATS KV bucket to use for caching ZedTokens")
 	viperx.MustBindFlag(v, "events.zedtokenbucket", flags.Lookup("events-zedtokenbucket"))
+
+	flags.String("runtime-socket", "", "change the iam-runtime socket path (default: "+defaultRuntimeSocketPath+")")
+	viperx.MustBindFlag(v, "runtime.socket", flags.Lookup("runtime-socket"))
 }

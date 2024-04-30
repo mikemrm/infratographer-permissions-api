@@ -10,10 +10,11 @@ import (
 	"testing"
 
 	"github.com/labstack/echo/v4"
+	"github.com/metal-toolbox/iam-runtime-contrib/pkg/mockruntime"
+	"github.com/metal-toolbox/iam-runtime/pkg/iam/runtime/authentication"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/gidx"
 
 	"go.infratographer.com/permissions-api/internal/query"
@@ -156,9 +157,15 @@ func TestAssignmentCreate(t *testing.T) {
 	testFn := func(ctx context.Context, input testInput) testingx.TestResult[*httptest.ResponseRecorder] {
 		result := testingx.TestResult[*httptest.ResponseRecorder]{}
 
+		runtime := new(mockruntime.MockRuntime)
+
+		runtime.On("ValidateCredential", "idntusr-abc123").Return(&authentication.ValidateCredentialResponse{
+			Result: authentication.ValidateCredentialResponse_RESULT_VALID,
+		}, nil)
+
 		engine := ctx.Value(contextKeyEngine).(query.Engine)
 
-		router, err := NewRouter(echojwtx.AuthConfig{Issuer: authsrv.Issuer}, engine)
+		router, err := NewRouter(runtime, engine)
 		if err != nil {
 			result.Err = err
 
@@ -273,9 +280,15 @@ func TestAssignmentsList(t *testing.T) {
 	testFn := func(ctx context.Context, path string) testingx.TestResult[*httptest.ResponseRecorder] {
 		result := testingx.TestResult[*httptest.ResponseRecorder]{}
 
+		runtime := new(mockruntime.MockRuntime)
+
+		runtime.On("ValidateCredential", "idntusr-abc123").Return(&authentication.ValidateCredentialResponse{
+			Result: authentication.ValidateCredentialResponse_RESULT_VALID,
+		}, nil)
+
 		engine := ctx.Value(contextKeyEngine).(query.Engine)
 
-		router, err := NewRouter(echojwtx.AuthConfig{Issuer: authsrv.Issuer}, engine)
+		router, err := NewRouter(runtime, engine)
 		if err != nil {
 			result.Err = err
 
@@ -441,9 +454,15 @@ func TestAssignmentDelete(t *testing.T) {
 	testFn := func(ctx context.Context, input testInput) testingx.TestResult[*httptest.ResponseRecorder] {
 		result := testingx.TestResult[*httptest.ResponseRecorder]{}
 
+		runtime := new(mockruntime.MockRuntime)
+
+		runtime.On("ValidateCredential", "idntusr-abc123").Return(&authentication.ValidateCredentialResponse{
+			Result: authentication.ValidateCredentialResponse_RESULT_VALID,
+		}, nil)
+
 		engine := ctx.Value(contextKeyEngine).(query.Engine)
 
-		router, err := NewRouter(echojwtx.AuthConfig{Issuer: authsrv.Issuer}, engine)
+		router, err := NewRouter(runtime, engine)
 		if err != nil {
 			result.Err = err
 

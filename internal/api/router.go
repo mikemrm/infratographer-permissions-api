@@ -6,7 +6,7 @@ import (
 	"net/http"
 
 	"github.com/labstack/echo/v4"
-	"go.infratographer.com/x/echojwtx"
+	"github.com/metal-toolbox/iam-runtime-contrib/middleware/echo/iamruntimemiddleware"
 	"go.infratographer.com/x/gidx"
 	"go.opentelemetry.io/otel"
 	"go.uber.org/zap"
@@ -27,14 +27,14 @@ type Router struct {
 }
 
 // NewRouter returns a new api router
-func NewRouter(authCfg echojwtx.AuthConfig, engine query.Engine, options ...Option) (*Router, error) {
-	auth, err := echojwtx.NewAuth(context.Background(), authCfg)
+func NewRouter(runtime iamruntimemiddleware.Runtime, engine query.Engine, options ...Option) (*Router, error) {
+	authmdw, err := iamruntimemiddleware.NewConfig().WithRuntime(runtime).ToMiddleware()
 	if err != nil {
 		return nil, err
 	}
 
 	router := &Router{
-		authMW: auth.Middleware(),
+		authMW: authmdw,
 		engine: engine,
 		logger: zap.NewNop().Sugar(),
 
@@ -138,7 +138,7 @@ func WithCheckConcurrency(count int) Option {
 }
 
 func (r *Router) currentSubject(c echo.Context) (types.Resource, error) {
-	subjectStr := echojwtx.Actor(c)
+	subjectStr := iamruntimemiddleware.ContextSubject(c)
 
 	subject, err := gidx.Parse(subjectStr)
 	if err != nil {

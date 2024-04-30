@@ -3,10 +3,10 @@ package cmd
 import (
 	"context"
 
+	"github.com/metal-toolbox/iam-runtime-contrib/iamruntimeclient"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"go.infratographer.com/x/crdbx"
-	"go.infratographer.com/x/echojwtx"
 	"go.infratographer.com/x/echox"
 	"go.infratographer.com/x/events"
 	"go.infratographer.com/x/otelx"
@@ -36,9 +36,9 @@ func init() {
 
 	v := viper.GetViper()
 
+	config.MustViperFlags(v, serverCmd.Flags())
 	echox.MustViperFlags(v, serverCmd.Flags(), apiDefaultListen)
 	otelx.MustViperFlags(v, serverCmd.Flags())
-	echojwtx.MustViperFlags(v, serverCmd.Flags())
 	events.MustViperFlags(v, serverCmd.Flags(), appName)
 }
 
@@ -51,6 +51,11 @@ func serve(_ context.Context, cfg *config.AppConfig) {
 	spiceClient, err := spicedbx.NewClient(cfg.SpiceDB, cfg.Tracing.Enabled)
 	if err != nil {
 		logger.Fatalw("unable to initialize spicedb client", "error", err)
+	}
+
+	runtime, err := iamruntimeclient.NewClient(cfg.Runtime.Socket)
+	if err != nil {
+		logger.Fatalw("failed to initialize iam-runtime client", "error", err)
 	}
 
 	eventsConn, err := events.NewConnection(cfg.Events.Config, events.WithLogger(logger))
@@ -101,7 +106,7 @@ func serve(_ context.Context, cfg *config.AppConfig) {
 		logger.Fatal("failed to initialize new server", zap.Error(err))
 	}
 
-	r, err := api.NewRouter(cfg.OIDC, engine, api.WithLogger(logger))
+	r, err := api.NewRouter(runtime, engine, api.WithLogger(logger))
 	if err != nil {
 		logger.Fatalw("unable to initialize router", "error", err)
 	}

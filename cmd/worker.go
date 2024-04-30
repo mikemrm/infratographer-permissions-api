@@ -37,6 +37,7 @@ var workerCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(workerCmd)
 
+	config.MustViperFlags(viper.GetViper(), serverCmd.Flags())
 	otelx.MustViperFlags(viper.GetViper(), workerCmd.Flags())
 	events.MustViperFlags(viper.GetViper(), workerCmd.Flags(), appName)
 	echox.MustViperFlags(viper.GetViper(), workerCmd.Flags(), apiDefaultListen)
